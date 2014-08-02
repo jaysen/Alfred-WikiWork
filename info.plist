@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>net.digitalrhizome.alfred-log-wikidpad-dayone</string>
+	<key>category</key>
+	<string>Productivity</string>
+	<key>connections</key>
+	<dict>
+		<key>15299C7A-CDEA-4359-8898-446F2892DB7C</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>FF316160-82F1-4AC1-8D82-72A1F0AC9ED6</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
+		<key>FF316160-82F1-4AC1-8D82-72A1F0AC9ED6</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>64D217AD-532C-498A-BA31-8615149DA004</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>Jaysen Naidoo</string>
+	<key>description</key>
+	<string>Log text to Wikidpad day and month page and to DayOne</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>Log-Wikidpad-DayOne</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>log</string>
+				<key>subtext</key>
+				<string>Log text to both Wikidpad and DayOne</string>
+				<key>text</key>
+				<string>Log-Wikidpad-DayOne</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>15299C7A-CDEA-4359-8898-446F2892DB7C</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<false/>
+				<key>output</key>
+				<integer>1</integer>
+				<key>removeextension</key>
+				<false/>
+				<key>sticky</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>log</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>64D217AD-532C-498A-BA31-8615149DA004</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>escaping</key>
+				<integer>127</integer>
+				<key>script</key>
+				<string>#!/bin/bash
+
+## addlogtoday_alfred.sh
+# if todays wiki page (YYMMDD.wiki) doesnt exist
+# 		creates todays wiki page YYMMDD.wiki 
+# 		writes header info
+# appends log content $1 / {query} into YYMMDD.wiki
+#
+# if this months wiki page YYMM.wiki doesnt exist
+# 		creates this months wiki page YYMM.wiki
+# 		writes header info 
+# appends a link to today's entry in YYMM.wiki
+#
+# Also writes log content ($1 / {query}) using a properly configured dayone cli
+#
+# by Jaysen Naidoo
+# 2010
+# v2.0
+
+
+# REPLACE WITH YOUR OWN WIKIDPAD WIKI LOCATION
+wikilocation="$HOME/Dropbox/wikis/JWiki/";
+
+daydate=$(date "+%Y%m%d");
+mnthdate=$(date "+%Y%m");
+
+dayheader=$(date "+%A, %B %d, (%Y/%m/%d):");
+mnthheader=$(date "+%Y-%m %B:");
+
+daypage=$wikilocation/data/${daydate}.wiki;
+mnthpage=$wikilocation/data/${mnthdate}.wiki;
+
+logdatestr=$(date "+[LOG.%Y.%m:%d] %A");
+logtimestr=$(date "+%H:%M");
+
+prevmnth=$(date -v -1m "+%Y%m");
+postmnth=$(date -v +1m "+%Y%m");
+
+#echo "debugging ............";
+#echo ${prevmnth};
+#echo ${postmnth};
+
+#### FOR OPENING in editor, we dont want to create the files, just open them if they exist. 
+# @TODO: if a date does not exist, loop back and find latest - could go in open latest wiki-log (month and date)
+
+
+if [ ! -f "$daypage" ]
+	then {
+		echo "file $filename not found .. creating ${dayheader}";
+		echo "+${dayheader}" &gt;&gt; $daypage;
+		echo "----------------------------------------------------------------------" &gt;&gt; $daypage;
+		echo "[tag:log][tag:dates][icon=date]" &gt;&gt; $daypage;
+		echo "----------------------------------------------------------------------" &gt;&gt; $daypage;
+		echo "[${mnthdate}]" &gt;&gt; $daypage;
+		echo &gt;&gt; $daypage;
+		echo ${logdatestr} &gt;&gt; $daypage;
+	}
+	else {
+		echo "$daypage found"
+	}
+fi;
+
+
+if [ ! -f "$mnthpage" ]
+	then {
+		echo "... file $filename not found .. creating ${mnthheader}";
+		echo "+${mnthheader}" &gt;&gt; $mnthpage;
+		echo "----------------------------------------------------------------------" &gt;&gt; $mnthpage;
+		echo "[icon=date][tag:log][tag:personal]" &gt;&gt; $mnthpage;
+		echo "[child_sort_order: natural]" &gt;&gt; $mnthpage;
+		echo "[alias:LogPage][alias:JournalPage] " &gt;&gt; $mnthpage;
+		echo "----------------------------------------------------------------------" &gt;&gt; $mnthpage;
+		echo "prev:[${prevmnth}]                                next:[${postmnth}]  " &gt;&gt; $mnthpage;
+		echo &gt;&gt; $mnthpage;
+		echo &gt;&gt; $mnthpage;
+	}
+	else {
+		echo "$mnthpage found"
+	}
+fi;
+
+# append log content to daypage:
+echo ${logtimestr}: adding .. {query};
+echo &gt;&gt; $daypage;
+echo ${logtimestr}: {query} &gt;&gt; $daypage;
+
+# append link to daypage on monthpage:
+# for now dont worry about repeating .... instead, we'll use a time anchor - to jump to each entry
+echo &gt;&gt; $mnthpage
+echo "[${daydate}]#${logtimestr}" &gt;&gt; $mnthpage;
+echo {query} &gt;&gt; $mnthpage;
+
+# add to dayone
+echo {query} | '/usr/local/bin/dayone' new
+</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>FF316160-82F1-4AC1-8D82-72A1F0AC9ED6</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string>Alfred-LogToWikidPad-And-DayOne
+===============================
+
+An Alfred Workflow to Log to pre-formatted Wikidpad DayPage and MonthPage, as well as create an entry in DayOne using (properly configured) dayone cli. The workflow makes use of Bash Scripts to access Wikidpad and Dayone.
+
+Wikidpad is an opensource (BSD Licensed) multiplatform (WxPython based) personal wiki notepad - extensible in Python and full featured (see http://wikidpad.sourceforge.net/)
+
+DayOne is a proprietary non free Journal App for OS-X and iOS. See http://dayoneapp.com/)
+To install and configure the DayOne CLI, necessary for use with this script, see http://dayoneapp.com/tools/cli-man/
+
+
+Installation
+------------
+Download the alfredworkflow file, double click to add as an Alfred workflow
+
+
+WikidPad Entries
+----------------
+This Alfred Script works for Wikidpad using the plain text file storage option, 
+and using the following Journal Pages formats:
+
+* Monthly Journal Page of the form YYYYMM.wiki
+* Daily Journal Page of the form YYYYMMDD.wiki
+
+If the above pages do not exist, they are created and the entry log is appended to the end of the files.
+
+
+DayOne Entries
+--------------
+This Alfred script will also create a log of the entry in DayOne using DayOne-CLI (http://dayoneapp.com/tools/cli-man/)
+
+
+Invocation
+----------
+Press the Alfred shortcut key/s and then type "log" followed by a space then the entry you want to create.</string>
+	<key>uidata</key>
+	<dict>
+		<key>15299C7A-CDEA-4359-8898-446F2892DB7C</key>
+		<dict>
+			<key>ypos</key>
+			<real>70</real>
+		</dict>
+		<key>64D217AD-532C-498A-BA31-8615149DA004</key>
+		<dict>
+			<key>ypos</key>
+			<real>70</real>
+		</dict>
+		<key>FF316160-82F1-4AC1-8D82-72A1F0AC9ED6</key>
+		<dict>
+			<key>ypos</key>
+			<real>70</real>
+		</dict>
+	</dict>
+	<key>webaddress</key>
+	<string></string>
+</dict>
+</plist>
