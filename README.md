@@ -29,6 +29,7 @@ DayOne Entries
 --------------
 This Alfred script will also create a log of the entry in DayOne using DayOne-CLI (http://dayoneapp.com/tools/cli-man/)
 
+
 Invocation
 ----------
 Press the Alfred shortcut key/s and then type "log" followed by a space then the entry you want to create.
